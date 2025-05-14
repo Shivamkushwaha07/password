@@ -3,130 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🔐 Pass Shield</title>
+  <title>Pass Shield</title>
   <style>
     body {
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      color: #00ffcc;
-      font-family: 'Courier New', monospace;
-      padding: 20px;
+      background: #111;
+      color: #0ff;
+      font-family: monospace;
       text-align: center;
+      padding: 30px;
     }
 
-    h1, h3 {
-      text-shadow: 0 0 5px #00ffe0, 0 0 10px #00ffe0;
-      animation: type 3s steps(40, end), blink 0.75s step-end infinite;
-      white-space: nowrap;
-      overflow: hidden;
-      border-right: 2px solid #00ffcc;
-      display: inline-block;
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
     }
 
-    h3 {
-      animation: none;
-      border-right: none;
+    h2 {
+      font-size: 1.4em;
       margin-top: 30px;
-    }
-
-    @keyframes type {
-      from { width: 0 }
-      to { width: 100% }
-    }
-
-    @keyframes blink {
-      from, to { border-color: transparent }
-      50% { border-color: #00ffcc }
+      color: #00ffc8;
     }
 
     input, button {
-      padding: 12px;
-      margin: 8px;
-      font-size: 16px;
       width: 260px;
-      border: none;
-      border-radius: 8px;
-      outline: none;
-      background: #1e1e2f;
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+      background: #222;
       color: #0ff;
-      box-shadow: 0 0 5px #0ff, 0 0 10px #0ff inset;
-      transition: 0.3s ease;
-    }
-
-    input:focus, button:hover {
-      box-shadow: 0 0 10px #0ff, 0 0 20px #0ff inset;
-      background: #292940;
+      border: 1px solid #0ff;
+      border-radius: 5px;
     }
 
     button {
-      background-color: #00ffc8;
+      background: #0ff;
       color: #000;
-      cursor: pointer;
       font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s ease;
     }
 
-    #result, #suggestion, #strength {
+    button:hover {
+      background: #00e6b8;
+    }
+
+    #suggestion, #strength {
       margin-top: 20px;
       font-size: 18px;
-      color: #fff;
-      text-shadow: 0 0 5px #00ffc8;
-    }
-
-    .tooltip {
-      position: relative;
-      display: inline-block;
-    }
-
-    .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 200px;
-      background-color: #222;
       color: #0ff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 8px;
-      position: absolute;
-      z-index: 1;
-      bottom: 125%;
-      left: 50%;
-      margin-left: -100px;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .tooltip:hover .tooltiptext {
-      visibility: visible;
-      opacity: 1;
     }
   </style>
 </head>
 <body>
   <h1>🔐 Pass Shield</h1>
 
-  <h3>🛠 Generate a Strong Password</h3>
-  <div class="tooltip">
-    <input id="name" placeholder="Enter your name" />
-    <span class="tooltiptext">We’ll use it as a base for your password</span>
-  </div>
-  <div class="tooltip">
-    <input id="birth" placeholder="Birth year (e.g., 2000)" />
-    <span class="tooltiptext">Adding complexity with your birth year</span>
-  </div>
-  <div class="tooltip">
-    <input id="word" placeholder="Favorite word" />
-    <span class="tooltiptext">Used to personalize your password</span>
-  </div>
-  <br/>
-  <button onclick="generate()">🚀 Suggest Password</button>
+  <h2>Generate Password</h2>
+  <input id="name" placeholder="Your Name" /><br>
+  <input id="birth" placeholder="Birth Year (e.g. 2000)" /><br>
+  <input id="word" placeholder="Favorite Word" /><br>
+  <button onclick="generate()">Generate 🔑</button>
 
   <div id="suggestion"></div>
 
-  <h3>💪 Check Password Strength</h3>
-  <div class="tooltip">
-    <input id="custom" placeholder="Enter your password" />
-    <span class="tooltiptext">See how strong your custom password is</span>
-  </div>
-  <br/>
-  <button onclick="checkStrength()">🔍 Check Strength</button>
+  <h2>Check Password Strength</h2>
+  <input id="custom" placeholder="Enter Password" /><br>
+  <button onclick="checkStrength()">Check 🔍</button>
 
   <div id="strength"></div>
 
@@ -144,7 +87,7 @@
 
       const data = await res.json();
       document.getElementById("suggestion").innerHTML =
-        "🔑 Suggested Password: <b>" + data.suggested + "</b><br/>⚙️ Strength: " + data.strength;
+        "Suggested Password: <b>" + data.suggested + "</b><br>Strength: " + data.strength;
     }
 
     async function checkStrength() {
@@ -157,7 +100,7 @@
       });
 
       const data = await res.json();
-      document.getElementById("strength").innerText = "🔍 Password Strength: " + data.strength;
+      document.getElementById("strength").innerText = "Password Strength: " + data.strength;
     }
   </script>
 </body>
