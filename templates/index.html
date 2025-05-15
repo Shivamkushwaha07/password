@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pass Shield</title>
   <style>
     body {
@@ -49,59 +49,231 @@
       background: #00e6b8;
     }
 
-    #suggestion, #strength {
+    #suggestion, #strength, #suggestions, #patterns, #breachWarning {
       margin-top: 20px;
       font-size: 18px;
       color: #0ff;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
     }
+
+    #strengthMeter {
+      width: 400px;
+      height: 20px;
+      background: #222;
+      margin: 10px auto;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    #strengthMeterFill {
+      height: 100%;
+      width: 0%;
+      background: #0f0;
+      transition: width 0.4s ease;
+    }
+
+    ul {
+      list-style-type: square;
+      padding-left: 20px;
+    }
+
+    #history {
+      margin-top: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+      border: 1px solid #0ff;
+      padding: 15px;
+      border-radius: 8px;
+      background: #000a;
+    }
+
+    .history-entry {
+      margin-bottom: 10px;
+      padding: 5px;
+      border-left: 8px solid;
+    }
+
+    .clear-btn {
+      background: #ff0044;
+      color: white;
+      margin-top: 10px;
+      width: auto;
+      padding: 8px 15px;
+      border-radius: 5px;
+    }
+
   </style>
 </head>
 <body>
   <h1>🔐 Pass Shield</h1>
 
   <h2>Generate Password</h2>
-  <input id="name" placeholder="Your Name" /><br>
-  <input id="birth" placeholder="Birth Year (e.g. 2000)" /><br>
-  <input id="word" placeholder="Favorite Word" /><br>
+  <input id="name" placeholder="Your Name" /><br />
+  <input id="birth" placeholder="Birth Year (e.g. 2000)" /><br />
+  <input id="word" placeholder="Favorite Word" /><br />
   <button onclick="generate()">Generate 🔑</button>
 
   <div id="suggestion"></div>
 
   <h2>Check Password Strength</h2>
-  <input id="custom" placeholder="Enter Password" /><br>
+  <input id="custom" placeholder="Enter Password" /><br />
   <button onclick="checkStrength()">Check 🔍</button>
 
   <div id="strength"></div>
+  <div id="strengthMeter">
+    <div id="strengthMeterFill"></div>
+  </div>
 
-  <script>
-    async function generate() {
-      const name = document.getElementById("name").value;
-      const birth = document.getElementById("birth").value;
-      const word = document.getElementById("word").value;
+  <div id="breachWarning"></div>
 
-      const res = await fetch("/api/password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, birth, word })
+  <h3>Suggestions:</h3>
+  <ul id="suggestions"></ul>
+
+  <h3>Detected Patterns:</h3>
+  <ul id="patterns"></ul>
+
+  <h2>Password History</h2>
+  <div id="history"></div>
+  <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+
+<script>
+  function updateStrengthMeter(level, color) {
+    const meterFill = document.getElementById("strengthMeterFill");
+    const percent = (["Very Weak", "Weak", "Moderate", "Strong", "Very Strong"].indexOf(level) + 1) * 20;
+    meterFill.style.width = percent + "%";
+    meterFill.style.backgroundColor = color;
+  }
+
+  async function generate() {
+    const name = document.getElementById("name").value;
+    const birth = document.getElementById("birth").value;
+    const word = document.getElementById("word").value;
+
+    const res = await fetch("/api/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, birth, word })
+    });
+
+    const data = await res.json();
+
+    document.getElementById("suggestion").innerHTML =
+      "Suggested Password: <b>" + data.suggested + "</b><br>Strength: <span style='color:" + data.color + "'>" + data.strength + "</span>";
+
+    updateStrengthMeter(data.strength, data.color);
+
+    // Show suggestions and patterns
+    displaySuggestionsPatterns(data);
+    displayHistory(data.history);
+    displayBreachWarning(data.breach_count);
+  }
+
+  async function checkStrength() {
+    const custom = document.getElementById("custom").value;
+
+    const res = await fetch("/api/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ custom })
+    });
+
+    const data = await res.json();
+
+    document.getElementById("strength").innerHTML = 
+      "Password Strength: <span style='color:" + data.color + "'>" + data.strength + "</span>";
+
+    updateStrengthMeter(data.strength, data.color);
+
+    displaySuggestionsPatterns(data);
+    displayHistory(data.history);
+    displayBreachWarning(data.breach_count);
+  }
+
+  function displaySuggestionsPatterns(data) {
+    const sugEl = document.getElementById("suggestions");
+    const patEl = document.getElementById("patterns");
+
+    sugEl.innerHTML = "";
+    patEl.innerHTML = "";
+
+    if (data.suggestions && data.suggestions.length > 0) {
+      data.suggestions.forEach(s => {
+        let li = document.createElement("li");
+        li.textContent = s;
+        sugEl.appendChild(li);
       });
-
-      const data = await res.json();
-      document.getElementById("suggestion").innerHTML =
-        "Suggested Password: <b>" + data.suggested + "</b><br>Strength: " + data.strength;
+    } else {
+      sugEl.innerHTML = "<li>No suggestions, good job!</li>";
     }
 
-    async function checkStrength() {
-      const custom = document.getElementById("custom").value;
-
-      const res = await fetch("/api/password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ custom })
+    if (data.patterns && data.patterns.length > 0) {
+      data.patterns.forEach(p => {
+        let li = document.createElement("li");
+        li.textContent = p;
+        patEl.appendChild(li);
       });
-
-      const data = await res.json();
-      document.getElementById("strength").innerText = "Password Strength: " + data.strength;
+    } else {
+      patEl.innerHTML = "<li>No suspicious patterns detected.</li>";
     }
-  </script>
+  }
+
+  function displayHistory(history) {
+    const historyEl = document.getElementById("history");
+    historyEl.innerHTML = "";
+    if (!history || history.length === 0) {
+      historyEl.innerHTML = "<p>No history yet.</p>";
+      return;
+    }
+    history.forEach(entry => {
+      let div = document.createElement("div");
+      div.classList.add("history-entry");
+      div.style.borderLeftColor = entry.color;
+      div.innerHTML = `
+        <b>Password:</b> ${entry.password} <br/>
+        <b>Checked At:</b> ${new Date(entry.checked_at).toLocaleString()} <br/>
+        <b>Strength:</b> <span style="color:${entry.color}">${entry.strength}</span><br/>
+        ${entry.patterns.length > 0 ? `<b>Patterns:</b> ${entry.patterns.join(", ")}` : ""}
+      `;
+      historyEl.appendChild(div);
+    });
+  }
+
+  function displayBreachWarning(count) {
+    const breachEl = document.getElementById("breachWarning");
+    if (count > 0) {
+      breachEl.innerHTML = `<b style="color:#ff4444">Warning:</b> This password was found in <b>${count}</b> breaches! Change it immediately.`;
+    } else if (count === 0) {
+      breachEl.innerHTML = `<b style="color:#44ff44">Good news:</b> This password was not found in known breaches.`;
+    } else {
+      breachEl.innerHTML = "";  // API error or unknown
+    }
+  }
+
+  async function clearHistory() {
+    const res = await fetch("/clear-history", { method: "POST" });
+    const data = await res.json();
+    if (data.message) {
+      alert(data.message);
+      document.getElementById("history").innerHTML = "<p>No history yet.</p>";
+    }
+  }
+
+  // Optional: Load previous history on page load
+  window.onload = async () => {
+    // Just do a dummy check with empty password to load history from session
+    const res = await fetch("/api/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ custom: "" })
+    });
+    const data = await res.json();
+    displayHistory(data.history);
+  };
+</script>
 </body>
 </html>
